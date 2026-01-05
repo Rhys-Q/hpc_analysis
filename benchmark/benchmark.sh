@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_BIN="${PYTHON:-python}"
 
-BACKENDS=("cutedsl" "triton" "tilelang")
+# BACKENDS=("cutedsl" "triton" "tilelang")
+BACKENDS=("cutedsl" )
 
 if [[ -n "${NS_LIST:-}" ]]; then
   IFS=' ' read -r -a NS <<< "${NS_LIST}"

@@ -2,7 +2,7 @@ from typing import Optional
 
 import cutlass
 import cutlass.cute as cute
-
+from cutlass.cute.runtime import from_dlpack
 DEFAULT_BLOCK_SIZE = 128
 
 
@@ -28,7 +28,7 @@ def run(A, B, C, block_size: int = DEFAULT_BLOCK_SIZE):
     Launch the cute kernel for vector add.
     """
     N = A.shape[0]
-    solve(A, B, C, N, block_size)
+    solve(from_dlpack(A), from_dlpack(B), from_dlpack(C), N, block_size)
 
 
 def emit_ptx(block_size: int = DEFAULT_BLOCK_SIZE) -> Optional[str]:

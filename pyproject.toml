@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hpc-analysis"
+version = "0.1.0"
+description = "Benchmarks GPU kernels across cutedsl/triton/tilelang with PTX/SASS capture."
+requires-python = "==3.12.*"
+authors = [{ name = "Rhys" }]
+dependencies = [
+  "torch==2.8.0",
+  "numpy>=1.24",
+  "nvidia-cutlass-dsl==4.3.4",
+  "triton==3.4.0",
+  "tilelang==v0.1.7",
+]
+
+
+#[tool.hatch.build.targets.wheel]
+#packages = [{ include = "hpc_analysis", from = "python" }]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".gitignore", "artifacts", "benchmark"]
+
+
+[[tool.uv.index]]
+url = "https://nexus.infra.agibot.com/repository/pypi-proxy/simple"
+default = true

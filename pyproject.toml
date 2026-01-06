@@ -24,6 +24,6 @@ dependencies = [
 exclude = [".gitignore", "artifacts", "benchmark"]
 
 
-[[tool.uv.index]]
-url = "https://nexus.infra.agibot.com/repository/pypi-proxy/simple"
-default = true
+#[[tool.uv.index]]
+#url = "https://nexus.infra.agibot.com/repository/pypi-proxy/simple"
+#default = true

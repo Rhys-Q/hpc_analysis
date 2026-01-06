@@ -30,8 +30,12 @@ DTYPE_MAP = {
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Benchmark vector_add across backends.")
-    parser.add_argument("--backend", choices=list(BACKEND_MODULES.keys()) + ["all"], default="all")
+    parser = argparse.ArgumentParser(
+        description="Benchmark vector_add across backends."
+    )
+    parser.add_argument(
+        "--backend", choices=list(BACKEND_MODULES.keys()) + ["all"], default="all"
+    )
     parser.add_argument("--N", type=int, default=1 << 20, help="Vector length")
     parser.add_argument("--dtype", choices=list(DTYPE_MAP.keys()), default="float32")
     parser.add_argument("--warmup", type=int, default=5)
@@ -39,9 +43,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--block-size", type=int, default=256)
     parser.add_argument("--num-warps", type=int, default=4, help="Triton only")
     parser.add_argument("--num-stages", type=int, default=2, help="Triton only")
-    parser.add_argument("--dump-ptx", action="store_true", help="Emit PTX to artifacts/ptx")
-    parser.add_argument("--dump-sass", action="store_true", help="Emit SASS (requires ptxas + cuobjdump/nvdisasm)")
-    parser.add_argument("--outdir", type=Path, default=ARTIFACT_ROOT, help="Output root for artifacts")
+    parser.add_argument(
+        "--dump-ptx", action="store_true", help="Emit PTX to artifacts/ptx"
+    )
+    parser.add_argument(
+        "--dump-sass",
+        action="store_true",
+        help="Emit SASS (requires ptxas + cuobjdump/nvdisasm)",
+    )
+    parser.add_argument(
+        "--outdir", type=Path, default=ARTIFACT_ROOT, help="Output root for artifacts"
+    )
     return parser.parse_args()
 
 
@@ -73,6 +85,7 @@ def run_backend(backend: str, args: argparse.Namespace) -> Optional[Dict]:
     ref = A + B
 
     run_kwargs = build_run_kwargs(backend, args)
+    run_args = (A, B, C, args.N, args.block_size)
 
     def invoke():
         mod.run(A, B, C, **run_kwargs)
@@ -100,7 +113,7 @@ def run_backend(backend: str, args: argparse.Namespace) -> Optional[Dict]:
     }
 
     if args.dump_ptx or args.dump_sass:
-        ptx_path, sass_path = dump_ptx_and_sass(backend, mod, args, run_kwargs)
+        ptx_path, sass_path = dump_ptx_and_sass(backend, mod, args, run_args)
         result["ptx_path"] = str(ptx_path) if ptx_path else None
         result["sass_path"] = str(sass_path) if sass_path else None
 
@@ -109,22 +122,26 @@ def run_backend(backend: str, args: argparse.Namespace) -> Optional[Dict]:
     tag = f"{backend}_N{args.N}_dtype{args.dtype}_bs{args.block_size}"
     metrics_path = out_metrics / f"{tag}.json"
     metrics_path.write_text(json.dumps(result, indent=2))
-    print(f"[{backend}] mean={mean_ms:.4f} ms bw={bw_gbps:.2f} GB/s wrote {metrics_path}")
+    print(
+        f"[{backend}] mean={mean_ms:.4f} ms bw={bw_gbps:.2f} GB/s wrote {metrics_path}"
+    )
     return result
 
 
-def dump_ptx_and_sass(backend: str, mod, args: argparse.Namespace, run_kwargs: Dict):
+def dump_ptx_and_sass(backend: str, mod, args: argparse.Namespace, run_args):
     emit_ptx = getattr(mod, "emit_ptx", None)
     if not emit_ptx:
         print(f"[{backend}] PTX emission not available")
         return None, None
 
-    ptx = emit_ptx(**run_kwargs)
+    ptx = emit_ptx(*run_args)
     if not ptx:
         print(f"[{backend}] emit_ptx returned empty; skip PTX/SASS dump")
         return None, None
 
-    out_base = args.outdir / "ptx" / "vector_add" / f"{backend}_N{args.N}_bs{args.block_size}"
+    out_base = (
+        args.outdir / "ptx" / "vector_add" / f"{backend}_N{args.N}_bs{args.block_size}"
+    )
     out_base.parent.mkdir(parents=True, exist_ok=True)
 
     if args.dump_sass:

@@ -1,0 +1,17 @@
+{
+  "backend": "cutedsl",
+  "N": 1048576,
+  "dtype": "float32",
+  "block_size": 256,
+  "num_warps": null,
+  "num_stages": null,
+  "mean_ms": 14.065494346618653,
+  "std_ms": 6.831540264142468,
+  "min_ms": 11.73305606842041,
+  "max_ms": 61.1962890625,
+  "bw_GBps": 0.8945943661784581,
+  "samples": 50,
+  "sm": "sm89",
+  "ptx_path": "/root/autodl-tmp/hpc_analysis/artifacts/ptx/vector_add/cutedsl_N1048576_bs256.ptx",
+  "sass_path": null
+}

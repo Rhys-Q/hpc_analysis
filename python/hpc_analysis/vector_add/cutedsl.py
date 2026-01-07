@@ -25,18 +25,17 @@ def solve(
     B: cute.Tensor,
     C: cute.Tensor,
     N: cute.Uint32,
-    block_size: cute.Uint32,
 ):
+    block_size = 128
     grid_dim = [cute.ceil_div(N, block_size), 1, 1]
     vector_add(A, B, C).launch(grid=grid_dim, block=[block_size, 1, 1], smem=0)
 
 
-def run(A, B, C, block_size: int = DEFAULT_BLOCK_SIZE):
+def run(A, B, C, N):
     """
     Launch the cute kernel for vector add.
     """
-    N = A.shape[0]
-    solve(from_dlpack(A), from_dlpack(B), from_dlpack(C), N, block_size)
+    solve(from_dlpack(A), from_dlpack(B), from_dlpack(C), N)
 
 
 def emit_ptx(
@@ -44,12 +43,11 @@ def emit_ptx(
     B: cute.Tensor,
     C: cute.Tensor,
     N: cute.Uint32,
-    block_size: cute.Uint32,
 ) -> Optional[str]:
     """
     Return PTX if the cute runtime exposes it; otherwise None.
     """
     vector_add = cute.compile[KeepPTX](
-        solve, from_dlpack(A), from_dlpack(B), from_dlpack(C), N, block_size
+        solve, from_dlpack(A), from_dlpack(B), from_dlpack(C), N
     )
     return vector_add.__ptx__

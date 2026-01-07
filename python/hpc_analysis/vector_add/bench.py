@@ -84,11 +84,10 @@ def run_backend(backend: str, args: argparse.Namespace) -> Optional[Dict]:
     C = torch.empty_like(A)
     ref = A + B
 
-    run_kwargs = build_run_kwargs(backend, args)
-    run_args = (A, B, C, args.N, args.block_size)
+    run_args = (A, B, C, args.N)
 
     def invoke():
-        mod.run(A, B, C, **run_kwargs)
+        mod.run(*run_args)
 
     metrics = measure_cuda(invoke, warmup=args.warmup, iters=args.reps)
     assert_allclose(ref, C)
@@ -100,7 +99,6 @@ def run_backend(backend: str, args: argparse.Namespace) -> Optional[Dict]:
         "backend": backend,
         "N": args.N,
         "dtype": args.dtype,
-        "block_size": args.block_size,
         "num_warps": args.num_warps if backend == "triton" else None,
         "num_stages": args.num_stages if backend == "triton" else None,
         "mean_ms": mean_ms,

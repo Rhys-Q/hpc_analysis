@@ -6,7 +6,7 @@ PYTHON_BIN="${PYTHON:-python}"
 export TRITON_CACHE_DIR=/tmp/triton_cache
 rm -rf $TRITON_CACHE_DIR
 # BACKENDS=("cutedsl" "triton" "tilelang")
-BACKENDS=("triton" )
+BACKENDS=("tilelang" )
 
 if [[ -n "${NS_LIST:-}" ]]; then
   IFS=' ' read -r -a NS <<< "${NS_LIST}"

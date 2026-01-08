@@ -1,0 +1,16 @@
+{
+  "backend": "tilelang",
+  "N": 1048576,
+  "dtype": "float32",
+  "num_warps": null,
+  "num_stages": null,
+  "mean_ms": 0.040104319378733634,
+  "std_ms": 0.0035356846302084448,
+  "min_ms": 0.03788800165057182,
+  "max_ms": 0.06348799914121628,
+  "bw_GBps": 313.7545330509316,
+  "samples": 50,
+  "sm": "sm86",
+  "ptx_path": null,
+  "sass_path": null
+}

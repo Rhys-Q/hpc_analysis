@@ -41,4 +41,6 @@ def emit_ptx(A, B, C, N) -> Optional[str]:
     """
     TileLang PTX emission placeholder.
     """
-    return None
+    kernel = vector_add_tilelang(N)
+    ptx = kernel._get_ptx()
+    return ptx

@@ -2,6 +2,8 @@ from typing import Optional
 
 try:
     import tilelang as tl  # type: ignore
+    import tilelang.language as T
+
 except ImportError:
     tl = None
 
@@ -9,16 +11,65 @@ except ImportError:
 DEFAULT_BLOCK_SIZE = 256
 
 
-def run(A, B, C, block_size: int = DEFAULT_BLOCK_SIZE):
-    """
-    TileLang backend placeholder. Raises if tilelang is unavailable or unimplemented.
-    """
-    if tl is None:
-        raise RuntimeError("tilelang is not installed; install it to enable this backend")
+@tl.jit(out_idx=[1, 2])
+def per_token_cast_to_fp8(M, N, blk_m):
+    dtype = T.float
+    group_size = 128
+    fp8_min = -448.0
+    fp8_max = 448.0
+
+    @T.prim_func
+    def per_token_cast(
+        X: T.Tensor((M, N), dtype),
+        X_fp8: T.Tensor((M, N), T.float8_e4m3fn),
+        X_amax: T.Tensor((M, T.ceildiv(N, group_size)), dtype),
+    ):
+        with T.Kernel(T.ceildiv(M, blk_m), T.ceildiv(N, group_size), threads=128) as (
+            bx,
+            by,
+        ):
+            row = bx
+            row_g_id = by
+            y_local = T.alloc_fragment((blk_m, group_size), dtype)
+            y_amax_local = T.alloc_fragment((blk_m,), dtype)
+            y_s_local = T.alloc_fragment((blk_m,), dtype)
+            y_q_local = T.alloc_fragment((blk_m, group_size), dtype)
+            y_q_local_fp8 = T.alloc_fragment((blk_m, group_size), T.float8_e4m3fn)
+
+            T.copy(
+                X[
+                    row * blk_m : (row + 1) * blk_m,
+                    row_g_id * group_size : (row_g_id + 1) * group_size,
+                ],
+                y_local,
+            )
+            T.reduce_absmax(y_local, y_amax_local, dim=1)
+            for i in T.Parallel(blk_m):
+                y_amax_local[i] = T.max(y_amax_local[i], 1e-4)
+                y_s_local[i] = y_amax_local[i] / fp8_max
+            for i, j in T.Parallel(blk_m, group_size):
+                y_q_local[i, j] = T.clamp(
+                    y_local[i, j] / y_s_local[i], fp8_min, fp8_max
+                )
+            T.copy(y_q_local, y_q_local_fp8)
+            for i in T.Parallel(blk_m):
+                X_amax[row * blk_m + i, row_g_id] = y_s_local[i]
+            T.copy(
+                y_q_local_fp8,
+                X_fp8[
+                    row * blk_m : (row + 1) * blk_m,
+                    row_g_id * group_size : (row_g_id + 1) * group_size,
+                ],
+            )
+
+    return per_token_cast
+
+
+def run(A, B, C, N):
     raise NotImplementedError("TileLang vector_add kernel needs implementation")
 
 
-def emit_ptx(block_size: int = DEFAULT_BLOCK_SIZE) -> Optional[str]:
+def emit_ptx(A, B, C, N) -> Optional[str]:
     """
     TileLang PTX emission placeholder.
     """
